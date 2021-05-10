@@ -24,5 +24,5 @@ def classify0(inX, dataSet, labels, k):
 
 
 group, labels = createDataBase()
-res, _ = classify0([1, 0], group, labels, 2)
-print(res)
+res, _ = classify0([1, 0], group, labels, 3)
+print('Classified as %s' % res)
