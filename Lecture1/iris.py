@@ -73,24 +73,38 @@ def autoNorm(dataSet):
 
 
 def IrisClassTest():
+    # 分割数据集
     traindata, trainlabel, testdata, testlabel = splitData()
+    # 用上述autoNorm方法进行归一化
     autoNorm(traindata)
     autoNorm(testdata)
     errorCount = 0
+    for i in range(30):
+        # 使用classify0函数进行kNN分类
+        res, _ = classify0(testdata[i, :], traindata, trainlabel, 3)
+        print("Classified as %d | Ground Truth: %d" % (res, testlabel[i]))
+        if res != testlabel[i]:
+            errorCount += 1
+    print(
+        "Total error number: {} error rate: {}%".format(errorCount, errorCount * 100 / 30))
+
+
+def showError():
+    traindata, trainlabel, testdata, testlabel = splitData()
+    traindata = autoNorm(traindata)
+    testdata = autoNorm(testdata)
     er = []
     for k in range(1, 11):
+        errorCount = 0
         for i in range(30):
-            res, _ = classify0(testdata[i, :], traindata, trainlabel, 3)
-            # print("Classified as %d | Ground Truth: %d" % (res, testlabel[i]))
+            res, _ = classify0(testdata[i, :], traindata, trainlabel, k)
             if res != testlabel[i]:
                 errorCount += 1
-        print(
-            "Total error number: {} error rate: {}%".format(errorCount, errorCount * 100 / 30))
         er.append(errorCount * 100 / 30)
 
     plt.plot(list(range(1, 11)), er, color='blue')
     plt.xlabel('Number of neighbor voters')
-    plt.ylabel('Error rate')
+    plt.ylabel('Error rate / %')
     plt.show()
 
 

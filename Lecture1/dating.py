@@ -59,7 +59,7 @@ def autoNorm(dataSet):
 
 
 def datingClassTest():
-    hoRatio = 0.50  # hold out 10%
+    hoRatio = 0.10  # hold out 10%
     datingDataMat, datingLabels = file2matrix('datingTestSet2.txt')  # load dataset from file
     normMat = autoNorm(datingDataMat)
     m = normMat.shape[0]
