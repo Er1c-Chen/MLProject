@@ -27,7 +27,7 @@ def createVocabList(dataSet):  # 创建一个不重复的列表包含全部词�
     return list(vocabSet)
 
 
-def setOfWords2Vec(vocabList, inputSet):
+def words2Vec(vocabList, inputSet):
     returnVec = [0] * len(vocabList)
     for word in inputSet:
         if word in vocabList:
@@ -37,16 +37,18 @@ def setOfWords2Vec(vocabList, inputSet):
     return returnVec
 
 
-def trainNB0(trainMatrix, trainCategory):
+def trainNB0(trainMatrix, trainClass):
     numTrainDocs = len(trainMatrix)
     numWords = len(trainMatrix[0])
-    pAbusive = sum(trainCategory) / float(numTrainDocs)
+    pAbusive = sum(trainClass) / float(numTrainDocs)
+    print(trainClass)
+    print(sum(trainClass))
     p0Num = np.ones(numWords)
     p1Num = np.ones(numWords)  # change to np.ones()
     p0Denom = 2.0
     p1Denom = 2.0  # change to 2.0
     for i in range(numTrainDocs):
-        if trainCategory[i] == 1:
+        if trainClass[i] == 1:
             p1Num += trainMatrix[i]
             p1Denom += sum(trainMatrix[i])
         else:
@@ -79,13 +81,13 @@ def testingNB():
     myVocabList = createVocabList(listOPosts)
     trainMat = []
     for postinDoc in listOPosts:
-        trainMat.append(setOfWords2Vec(myVocabList, postinDoc))
+        trainMat.append(words2Vec(myVocabList, postinDoc))
     p0V, p1V, pAb = trainNB0(np.array(trainMat), np.array(listClasses))
     testEntry = ['love', 'my', 'dalmation']
-    thisDoc = np.array(setOfWords2Vec(myVocabList, testEntry))
+    thisDoc = np.array(words2Vec(myVocabList, testEntry))
     print(testEntry, 'classified as: ', classifyNB(thisDoc, p0V, p1V, pAb))
     testEntry = ['stupid', 'garbage']
-    thisDoc = np.array(setOfWords2Vec(myVocabList, testEntry))
+    thisDoc = np.array(words2Vec(myVocabList, testEntry))
     print(testEntry, 'classified as: ', classifyNB(thisDoc, p0V, p1V, pAb))
 
 
@@ -201,5 +203,5 @@ def getTopWords(ny, sf):
         print(item[0])
 '''
 
-
-spamTest()
+testingNB()
+# spamTest()
