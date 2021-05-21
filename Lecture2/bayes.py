@@ -41,8 +41,6 @@ def trainNB0(trainMatrix, trainClass):
     numTrainDocs = len(trainMatrix)
     numWords = len(trainMatrix[0])
     pAbusive = sum(trainClass) / float(numTrainDocs)
-    print(trainClass)
-    print(sum(trainClass))
     p0Num = np.ones(numWords)
     p1Num = np.ones(numWords)  # change to np.ones()
     p0Denom = 2.0
@@ -91,9 +89,13 @@ def testingNB():
     print(testEntry, 'classified as: ', classifyNB(thisDoc, p0V, p1V, pAb))
 
 
-def textParse(bigString):  # input is big string, #output is word list
-    listOfTokens = re.split(r'\W*', bigString)
-    return [tok.lower() for tok in listOfTokens if len(tok) > 2]
+def textParse(string):  # input is big string, #output is word list
+    listOfTokens = re.split(r'\W+', string)
+    res = []
+    for tok in listOfTokens:
+        if tok != '':
+            res.append(tok.lower())
+    return res if len(res) > 0 else None
 
 
 def spamTest():
@@ -103,20 +105,21 @@ def spamTest():
     for i in range(1, 26):
         spamFile = open('email/spam/%d.txt' % i)
         for line in spamFile:
-            wordList = re.split('\W+', line)
-            docList.append(wordList)
-            fullText.extend(wordList)
-            classList.append(1)
+            wordList = textParse(line)
+            if wordList is not None:
+                docList.append(wordList)
+                fullText.extend(wordList)
+                classList.append(1)
         hamFile = open('email/ham/%d.txt' % i)
         for line in hamFile:
-            wordList = re.split('\W+', line)
-            docList.append(wordList)
-            fullText.extend(wordList)
-            classList.append(0)
+            wordList = textParse(line)
+            if wordList is not None:
+                docList.append(wordList)
+                fullText.extend(wordList)
+                classList.append(0)
     vocabList = createVocabList(docList)  # create vocabulary
-    # print(vocabList)
     trainingSet = list(range(50))
-    testSet = []  # create test set
+    testSet = []
     for i in range(10):
         randIndex = int(np.random.uniform(0, len(trainingSet)))
         testSet.append(trainingSet[randIndex])
@@ -124,12 +127,12 @@ def spamTest():
     trainMat = []
     trainClasses = []
     for docIndex in trainingSet:  # train the classifier (get probs) trainNB0
-        trainMat.append(bagOfWords2VecMN(vocabList, docList[docIndex]))
+        trainMat.append(words2Vec(vocabList, docList[docIndex]))
         trainClasses.append(classList[docIndex])
     p0V, p1V, pSpam = trainNB0(np.array(trainMat), np.array(trainClasses))
     errorCount = 0
     for docIndex in testSet:  # classify the remaining items
-        wordVector = bagOfWords2VecMN(vocabList, docList[docIndex])
+        wordVector = words2Vec(vocabList, docList[docIndex])
         res = classifyNB(np.array(wordVector), p0V, p1V, pSpam)
         if res != classList[docIndex]:
             errorCount += 1
@@ -203,5 +206,5 @@ def getTopWords(ny, sf):
         print(item[0])
 '''
 
-testingNB()
-# spamTest()
+# testingNB()
+spamTest()
