@@ -160,8 +160,8 @@ def trainLogisticReg(data, label):
         hess = np.zeros([d, d])
         for i in range(d):
             for j in range(d):
-                h[i][j] = np.mean(
-                    g(np.matmul(data, theta)) * (1 - g(np.matmul(data, theta))) * x[:, i] * x[:, j]
+                hess[i][j] = np.mean(
+                    g(np.matmul(data, theta)) * (1 - g(np.matmul(data, theta))) * data[:, i] * data[:, j]
                 )
         new_theta = theta - np.matmul(np.linalg.inv(hess), grad)
         delta = np.linalg.norm(new_theta - theta)
