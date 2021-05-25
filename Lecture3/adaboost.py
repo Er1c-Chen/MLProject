@@ -1,6 +1,6 @@
 import numpy as np
 from matplotlib import pyplot as plt
-
+import operator
 
 def loadSimpData():  # 读取数据集与对应的标签
     dataMat = np.array([[1., 2.1],
@@ -70,7 +70,7 @@ def buildStump(dataArr, classLabels, D):
     return bestStump, minError, bestClasEst
 
 
-def adaBoostTrainDS(dataArr, classLabels, numIt=100):
+def adaBoostTrainDS(dataArr, classLabels, numIt=10):
     weakClassArr = []  # 建立一个矩阵用于存放基学习器
     m = np.shape(dataArr)[0]
     D = np.mat(np.ones((m, 1)) / m)  # 初始化权值为1/m
@@ -145,7 +145,7 @@ adaClassify(testMat, testLabel, weakClassArr)
 
 plotThis(sampleMat, sampleLabel, sampleArr)
 
-
+'''
 def trainLogisticReg(data, label):
     def g(z): return 1 / (1 + np.exp(z))
     n, d = data.shape
@@ -218,10 +218,78 @@ def logisticPredict(data, theta):
     else:
         clas = 0
     return prob, clas
+'''
 
 
+def classify0(inX, dataSet, labels, k):
+    dataSetSize = dataSet.shape[0]  # 返回数据集的行数
+    # 将输入向量按y轴方向复制数据集行数次，计算与原数据集的距离
+    diffMat = np.tile(inX, (dataSetSize, 1)) - dataSet
+    sqDiffMat = diffMat ** 2  # 计算平方差
+    sqDistances = sqDiffMat.sum(axis=1)  # 对矩阵求和，计算平方距离
+    distances = sqDistances ** 0.5  # 再对平方距离差开根号
+    sortedDistIndicies = distances.argsort()  # 将distances中的元素从小到大排列，提取其对应的index
+    classCount = {}
+    for i in range(k):
+        voteIlabel = labels[sortedDistIndicies[i]]
+        classCount[voteIlabel] = classCount.get(voteIlabel, 0) + 1
+    sortedClassCount = sorted(classCount.items(), key=operator.itemgetter(1), reverse=True)
+    return sortedClassCount[0][0], classCount
 
 
+def AdaBoostWithkNN(testArr, dataArr, classLabels, testLabels, numIt=40):
+    weakClassArr = []  # 建立一个矩阵用于存放基学习器
+    dataArr = np.array(dataArr)
+    testArr = np.array(testArr)
+    classLabels = np.array(classLabels)
+    testLabels = np.array(testLabels)
+    m = np.shape(testArr)[0]
+    D = np.mat(np.ones((m, 1)) / m)  # 初始化权值为1/m
+    aggClassEst = np.mat(np.zeros((m, 1)))
+    alphaList = []
+    result = []
+
+    for i in range(1, numIt + 1):
+        errornum = 0
+        for t, sample in enumerate(testArr):
+            res, _ = classify0(sample, dataArr, classLabels, i)
+            result[t].append(res)
+            if res != classLabels[t]:
+                errornum += 1
+        error = errornum / len(testArr)
+        # bestStump, error, classEst = buildStump(dataArr, classLabels, D)  # 调用buildStump函数 建立决策树
+        # 通过alpha的更新公式计算alpha
+        alpha = float(0.5 * np.log((1.0 - error) / max(error, 1e-16)))
+        alphaList.append(alpha)
+
+        '''
+        # 计算自然底数幂次项
+        resultN = np.array(result)
+        expon = np.multiply(-1 * alpha * np.mat(testLabels).T, resultN[:, np.newaxis])
+        D = np.multiply(D, np.exp(expon))  # 更新权值D
+        D = D / D.sum()  # 对新计算出的D进行归一化操作(即公式中/z)
+        aggClassEst += alpha * resultN[:, np.newaxis]  # 计算更新后的分类结果
+
+        aggErrors = np.multiply(np.sign(aggClassEst) != np.mat(testLabels).T, np.ones((m, 1)))
+        errorRate = aggErrors.sum() / m
+
+        if m >= 50:
+            if i % 10 == 0 and i != 0:
+                print("total error: ", errorRate, "({} / {})".format(i, numIt))
+        else:
+            print("total error: ", errorRate)
+        
+
+        print("total error: ", errorRate)
+        if errorRate == 0.0:  # 如果错误率为0则直接跳出循环节省时间
+            break
+        '''
+
+
+    return weakClassArr
+
+
+AdaBoostWithkNN(testMat, trainMat, trainLabel, testLabel)
 
 
 
