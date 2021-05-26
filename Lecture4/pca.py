@@ -30,34 +30,25 @@ def PCA(dataMat, topNFeat=1e6):
     lowDDataMat = meanRemoved * redEigVects
     # 加回均值
     reconMat = (lowDDataMat * redEigVects.T) + meanVals
-    return lowDDataMat, reconMat
+    return lowDDataMat, reconMat, redEigVects
 
 
 def replaceNaNWithMean():
     # 将缺失数据替换为均值
-    dataMat = loadDataSet('./data/secom.data', ' ')
-    numFeat = np.shape(dataMat)[1]
-    ind = []
-    nanind = []
+    datMat = loadDataSet('./data/secom.data', ' ')
+    numFeat = np.shape(datMat)[1]
     for i in range(numFeat):
         # 找到除确实数据外的其他数据 计算均值
-        for item in dataMat[:, i]:
-            if not np.isnan(item):
-                ind.append(item.index)
-            else:
-                nanind.append(item.index)
-            meanVal = np.mean(dataMat[ind, i])
-            dataMat[nanind, i] = meanVal
-
-        # meanVal = np.mean(dataMat[np.nonzero(np.isnan(dataMat[:, i].A))[0], i])
+        meanVal = np.mean(datMat[np.nonzero(~np.isnan(datMat[:, i].A))[0], i])
         # 修正NaN为均值
-        # dataMat[np.nonzero(np.isnan(dataMat[:, i].A))[0], i] = meanVal
-    return dataMat
+        datMat[np.nonzero(np.isnan(datMat[:, i].A))[0], i] = meanVal
+    return datMat
 
 
 dataMat = loadDataSet('./data/testSet.txt')
-lowDData, reconMat = PCA(dataMat, 1)
+lowDData, reconMat, _ = PCA(dataMat, 1)
 print(dataMat.shape, lowDData.shape)
+
 
 fig = plt.figure()
 ax = fig.add_subplot(111)
@@ -69,10 +60,20 @@ plt.legend([sc1, sc2], ['Original', 'After PCA'], loc='lower right', scatterpoin
 plt.show()
 
 secomData = replaceNaNWithMean()
-meanVals = np.mean(dataMat, axis=0)
-# 属性减掉均值
-meanRemoved = dataMat - meanVals
-# 计算协方差矩阵及特征值
-covMat = np.cov(meanRemoved, rowvar=0)
-eigVals, eigVects = np.linalg.eig(np.mat(covMat))
-print(eigVals)
+nlowDData, nreconMat, _ = PCA(secomData, 6)
+print(secomData.shape, nlowDData.shape)
+
+_, _, vec = PCA(secomData, 600)
+print(np.trace(vec))
+y = []
+x = (1, 2, 3, 4, 5, 6, 10, 20)
+for i in x:
+    _, recon, eigvec = PCA(secomData, i)
+    print(np.trace(eigvec))
+    y.append(np.trace(eigvec)/np.trace(vec))
+
+
+plt.plot(x, y)
+plt.xlabel('Dimensions after PCA')
+plt.ylabel('Information preserved')
+plt.show()
