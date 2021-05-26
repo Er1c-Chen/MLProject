@@ -18,6 +18,7 @@ image = loadData()
 
 
 def meanFace():
+    # 这里直接读取之前计算好的数据 避免浪费时间
     meanface = []
     with open('./data/meanface.txt') as f:
         text = f.read()
