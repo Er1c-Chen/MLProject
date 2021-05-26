@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib
 
 
 def loadDataSet(fileName, delim='\t'):
@@ -30,7 +29,7 @@ def PCA(dataMat, topNFeat=1e6):
     lowDDataMat = meanRemoved * redEigVects
     # 加回均值
     reconMat = (lowDDataMat * redEigVects.T) + meanVals
-    return lowDDataMat, reconMat, redEigVects
+    return lowDDataMat, reconMat, eigVals
 
 
 def replaceNaNWithMean():
@@ -63,17 +62,25 @@ secomData = replaceNaNWithMean()
 nlowDData, nreconMat, _ = PCA(secomData, 6)
 print(secomData.shape, nlowDData.shape)
 
-_, _, vec = PCA(secomData, 600)
-print(np.trace(vec))
-y = []
-x = (1, 2, 3, 4, 5, 6, 10, 20)
-for i in x:
-    _, recon, eigvec = PCA(secomData, i)
-    print(np.trace(eigvec))
-    y.append(np.trace(eigvec)/np.trace(vec))
 
+def plotting():
+    _, reconMat, eigVals = PCA(secomData, 600)
+    y1 = []
+    y2 = []
+    x = range(1, 21)
+    for i in x:
+        y1.append(eigVals[0:i].sum()/eigVals.sum())
+        y2.append(eigVals[i-1]/eigVals.sum())
+        print(eigVals[0:i])
 
-plt.plot(x, y)
-plt.xlabel('Dimensions after PCA')
-plt.ylabel('Information preserved')
-plt.show()
+    plt.plot(x, y1)
+    plt.plot(x, y2)
+    plt.scatter(6, y1[5], marker='o', c='r', s=20)
+    plt.text(6, y1[5]-0.1, '(6,{:.2f}%)\n'.format(y1[5]*100), c='black')
+    plt.xlabel('Dimensions after PCA')
+    plt.ylabel('Variance proportions')
+    plt.legend(['Cumulative variance\npreserved/%',
+                'Variance each PC \npreserves/%'], loc='right')
+    plt.show()
+
+plotting()
