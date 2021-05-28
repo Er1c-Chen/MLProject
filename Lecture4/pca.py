@@ -7,6 +7,7 @@ def loadDataSet(fileName, delim='\t'):
     fr = open(fileName)
     stringArr = [line.strip().split(delim) for line in fr.readlines()]
     datArr = [list(map(float, line)) for line in stringArr]
+    print(np.array(datArr).shape)
     return np.mat(datArr)
 
 
