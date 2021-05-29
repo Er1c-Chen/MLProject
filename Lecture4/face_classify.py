@@ -161,5 +161,5 @@ def fisherFace(image, labels, N):
 
 N = 8
 image, labels = loadData()
-# eigenFace(image, labels, N)
-fisherFace(image, labels, N)
+eigenFace(image, labels, N)
+# fisherFace(image, labels, N)
