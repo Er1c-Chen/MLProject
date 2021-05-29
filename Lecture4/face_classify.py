@@ -7,17 +7,23 @@ import random
 import operator
 
 
-model = cv2.face.FisherFaceRecognizer_create()
-def loadData():
+def loadData(resize):
     path = './data/project1-data-Recognition/train'
     files = os.listdir(path)
     image = []
     labels = []
     pattern = re.compile(r'(?<=subject)\d*')
-    for file in files:
-        img = cv2.imread(path + '/' + file, 0)
-        image.append(img.flatten() / 255)
-        labels.append(int(str(pattern.findall(file)[0])))
+    if resize:
+        for file in files:
+            img = cv2.imread(path + '/' + file, 0)
+            img = cv2.resize(img, (23, 20), interpolation=cv2.INTER_NEAREST)
+            image.append(img.flatten() / 255)
+            labels.append(int(str(pattern.findall(file)[0])))
+    else:
+        for file in files:
+            img = cv2.imread(path + '/' + file, 0)
+            image.append(img.flatten() / 255)
+            labels.append(int(str(pattern.findall(file)[0])))
     return np.array(image), np.array(labels)
 
 
@@ -67,22 +73,31 @@ def lda(data, labels, topNFeat):
     # Sw 类内散度矩阵
     dim = data.shape[1]
     Sw = np.mat(np.zeros((dim, dim)))
-
-    for i in labels:
+    print(data.shape)
+    for i in list(set(labels)):
+        print('calculating Sw for class', i)
         Ci = data[labels == i]
         ui = np.mean(Ci, axis=0)
         Si = np.dot((Ci-ui).T, (Ci-ui))
+        print(Si)
         Sw += Si
     # St 全局散度矩阵
     u = np.mean(data, axis=0)
-
     C = np.mat(data)
+    print('calculating St')
     St = np.dot((C-u).T, (C-u))
-    print(St)
+    St_, eigVect, _ = pca(St, len(labels) - classes)
+    Sw_ = np.matmul(eigVect.T, Sw).T
     # Sb 类间散度矩阵
-    Sb = St - Sw
+    Sb = St_ - Sw_
+    # Sb1 = np.matmul(eigvec.T, Sb)
+    # Sb = np.matmul(Sb1, eigvec)
     # 求Sw.inv * Sb的特征向量
-    S = np.dot(np.linalg.inv(Sw), Sb)
+    print('calculating S')
+    # Sw1 = np.matmul(eigvec.T, Sw)
+    # Sw = np.matmul(Sw1, eigvec)
+    S = np.dot(np.linalg.inv(Sw_), Sb)
+    print('calculating eigenvalues')
     eigValues, eigVects = np.linalg.eig(S)
     eigValInd = np.argsort(eigValues)
     # 除去不需要的特征属性
@@ -90,8 +105,8 @@ def lda(data, labels, topNFeat):
     # 将特征值逆序排列
     redEigVects = eigVects[:, eigValInd]
     lowDDataMat = np.matmul(data, redEigVects)
-    print(redEigVects)
-    return None, redEigVects, u
+    print(np.real(redEigVects))
+    return lowDDataMat, redEigVects, u
 
 
 def classify0(inX, dataSet, labels, k):
@@ -112,10 +127,10 @@ def classify0(inX, dataSet, labels, k):
 
 def eigenFace(image, labels, N):
     print('Eigenfaces: Face classification using PCA')
-    for K in [10]:
-    # for K in range(10, 161, 10):
+    # for K in [10]:
+    for K in range(10, 161, 10):
         for t in range(10):
-            random.seed(33311)
+            # random.seed(33311)
             train_data, train_labels, test_data, test_labels = splitTrainTest(image, N)
             errorCount = 0
             er = []
@@ -139,27 +154,30 @@ def fisherFace(image, labels, N):
         pictures selected from each subject (N).
     """
     print('Fisherfaces: Face classification using LDA')
-    for K in [3]:
+    for K in [8]:
     # for K in range(3, 16, 3):
-        for t in range(10):
-            random.seed(33311)
-            train_data, train_labels, test_data, test_labels = splitTrainTest(image, N)
-            errorCount = 0
-            er = []
-            eigenTrain, eigenVec, meanface = lda(train_data, train_labels, topNFeat=K)
-            for i, test in enumerate(test_data):
-                test = test - meanface
-                eigenTest = np.dot(eigenVec.T, test)
-                res, _ = classify0(eigenTest.flatten(), eigenTrain, train_labels, 1)
-                # print('Face #{} classified as subject {} | Ground truth: {}'.format(i+1, res, test_label[i]))
-                if res != test_labels[i]:
-                    errorCount += 1
-            print("Dim K={} | Error: {}/{} | Error Rate: {}%".format(K, errorCount, len(test_labels),
-                                                                     errorCount * 100 / len(test_labels)))
-            er.append(errorCount * 100 / len(test_labels))
+    #     for t in range(10):
+    #     random.seed(33311)
+        train_data, train_labels, test_data, test_labels = splitTrainTest(image, N)
+        errorCount = 0
+        er = []
+        eigenTrain, eigenVec, meanface = lda(train_data, train_labels, topNFeat=K)
+        proj_test_data, _, _ = pca(test_data, 15*N-15)
+        for i, test in enumerate(proj_test_data):
+            print(test.shape, meanface.shape)
+            test = test - meanface
+            eigenTest = np.dot(eigenVec.T, test)
+            print(eigenTest)
+            res, _ = classify0(eigenTest.flatten(), eigenTrain, train_labels, 1)
+            # print('Face #{} classified as subject {} | Ground truth: {}'.format(i+1, res, test_label[i]))
+            if res != test_labels[i]:
+                errorCount += 1
+        print("Dim K={} | Error: {}/{} | Error Rate: {}%".format(K, errorCount, len(test_labels),
+                                                                 errorCount * 100 / len(test_labels)))
+        er.append(errorCount * 100 / len(test_labels))
         print('Average Error Rate:{:.2f}%'.format(np.mean(er)))
 
-N = 8
-image, labels = loadData()
+N = 9
+image, labels = loadData(False)
 eigenFace(image, labels, N)
 # fisherFace(image, labels, N)
