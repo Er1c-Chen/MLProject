@@ -21,31 +21,9 @@ def loadData():
 image, labels = loadData()
 
 
-def meanFace():
-    # 这里直接读取之前计算好的数据 避免浪费时间
-    '''
-    meanface = []
-    with open('./data/meanface.txt') as f:
-        text = f.read()
-        for item in text.split(','):
-            meanface.append(float(item))
-
-    m = image.shape[1]
-    for i in range(m):
-    '''
-    meanface = np.mean(image, axis=0)
-
-    meanface = np.array(meanface)
-
-    # cv2.imshow('Meanface', meanface.reshape(231, 195))
-    # cv2.waitKey(0)
-    # cv2.destroyAllWindows()
-    return meanface
-
-
 def pca(topNFeat=1e5):
     dataMat, labels = loadData()
-    meanVals = meanFace()
+    meanVals = np.mean(dataMat, axis=0)
     meanRemoved = dataMat - meanVals
     # u, s, vt = np.linalg.svd(meanRemoved)
     # print(vt, vt.shape)
