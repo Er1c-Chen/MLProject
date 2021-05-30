@@ -63,6 +63,7 @@ def pca(dataMat, topNFeat=1e7):
     lowDDataMat = np.matmul(meanRemoved, redEigVects)
     # 加回均值
     reconMat = np.matmul(lowDDataMat, redEigVects.T) + meanVals
+    print(redEigVects)
     return lowDDataMat, redEigVects, meanVals
 
 
@@ -86,17 +87,18 @@ def lda(data, labels, topNFeat):
     C = np.mat(data)
     print('calculating St')
     St = np.dot((C-u).T, (C-u))
-    St_, eigVect, _ = pca(St, len(labels) - classes)
-    Sw_ = np.matmul(eigVect.T, Sw).T
+    # St_, eigVect, _ = pca(St, len(labels) - classes)
+    # Sw_ = np.matmul(eigVect.T, Sw).T
     # Sb 类间散度矩阵
-    Sb = St_ - Sw_
+    Sb = St - Sw
+    # Sb = St_ - Sw_
     # Sb1 = np.matmul(eigvec.T, Sb)
     # Sb = np.matmul(Sb1, eigvec)
     # 求Sw.inv * Sb的特征向量
     print('calculating S')
     # Sw1 = np.matmul(eigvec.T, Sw)
     # Sw = np.matmul(Sw1, eigvec)
-    S = np.dot(np.linalg.inv(Sw_), Sb)
+    S = np.dot(np.linalg.inv(Sw), Sb)
     print('calculating eigenvalues')
     eigValues, eigVects = np.linalg.eig(S)
     eigValInd = np.argsort(eigValues)
@@ -105,8 +107,8 @@ def lda(data, labels, topNFeat):
     # 将特征值逆序排列
     redEigVects = eigVects[:, eigValInd]
     lowDDataMat = np.matmul(data, redEigVects)
-    print(np.real(redEigVects))
-    return lowDDataMat, redEigVects, u
+    reconMat = np.matmul(lowDDataMat, redEigVects.T)
+    return np.real(reconMat), np.real(redEigVects), u
 
 
 def classify0(inX, dataSet, labels, k):
@@ -177,7 +179,25 @@ def fisherFace(image, labels, N):
         er.append(errorCount * 100 / len(test_labels))
         print('Average Error Rate:{:.2f}%'.format(np.mean(er)))
 
+
+def testSample():
+    data, labels = loadData(True)
+    image = []
+    for i in range(10):
+        low, eig, mean = lda(data, labels, topNFeat=15)
+        image.append(eig.T[i].reshape(23, 20))
+    fig = plt.figure
+    for i in range(1, 10):
+        plt.subplot(3, 3, i)
+        plt.imshow(image[i - 1], cmap=plt.cm.gray)
+        plt.title('eigenface{}'.format(i))
+        plt.xticks([])
+        plt.yticks([])
+    plt.show()
+
+
 N = 9
 image, labels = loadData(False)
-eigenFace(image, labels, N)
+# eigenFace(image, labels, N)
 # fisherFace(image, labels, N)
+testSample()

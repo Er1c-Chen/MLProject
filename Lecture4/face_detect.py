@@ -21,36 +21,43 @@ def loadData():
 image, labels = loadData()
 
 
-def pca(topNFeat=1e5):
+def minmax(data):
+    a = []
+    for row in data:
+        max_ = np.max(row)
+        min_ = np.min(row)
+        for pixel in row.A:
+            pixel = (pixel - min_) / (max_ - min_)
+            a.append(pixel)
+    return np.array(a)
+
+
+def pca(topNFeat):
     dataMat, labels = loadData()
     meanVals = np.mean(dataMat, axis=0)
     meanRemoved = dataMat - meanVals
-    # u, s, vt = np.linalg.svd(meanRemoved)
-    # print(vt, vt.shape)
-    '''
-    # 计算协方差矩阵及特征值
-    covMat = np.cov(meanRemoved, rowvar=0)
-    eigVals, eigVects = np.linalg.eig(np.mat(covMat))
-    '''
-    # print('Please wait......')
     c_ = np.matmul(meanRemoved, meanRemoved.T)
+    print(c_)
     eig, vec = np.linalg.eig(np.mat(c_))
     eigVects = np.dot(meanRemoved.T, vec)
+
     eigValInd = np.argsort(eig)
     # 除去不需要的特征属性
     eigValInd = eigValInd[:-(topNFeat + 1):-1]
     # 将特征值逆序排列
     redEigVects = eigVects[:, eigValInd]
+
     lowDDataMat = np.matmul(meanRemoved, redEigVects)
     # 加回均值
-    reconMat = np.matmul(lowDDataMat, redEigVects.T) + meanVals
+    reconMat = np.matmul(lowDDataMat, redEigVects.T)
+    reconMat = minmax(reconMat) + meanVals
     return reconMat
 
 
 def testSample():
     image = []
     for i in range(10):
-        image.append(pca(topNFeat=10)[i].reshape(231, 195))
+        image.append(pca(topNFeat=15)[i].reshape(231, 195))
     fig = plt.figure
     for i in range(1, 10):
         plt.subplot(3, 3, i)

@@ -30,6 +30,7 @@ def PCA(dataMat, topNFeat=1e6):
     lowDDataMat = meanRemoved * redEigVects
     # 加回均值
     reconMat = (lowDDataMat * redEigVects.T) + meanVals
+    print(lowDDataMat * redEigVects.T, meanVals)
     return lowDDataMat, reconMat, eigVals
 
 
